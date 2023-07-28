@@ -1,15 +1,16 @@
 import pygame
+import math
 
 pygame.init()
 
 # グリッド線の描画
-def drow_grid():
+def draw_grid():
     for i in range(1, 3):
         pygame.draw.line(screen, BLACK, (0, i * 200), (screen_width, i * 200), 5)
         pygame.draw.line(screen, BLACK, (i * 200, 0), (i * 200, screen_height), 5)
 
 # ボードの描画
-def drow_board():
+def draw_board():
     for row_index, row in enumerate(board):
         for col_index, col in enumerate(row):
             if col == 1:
@@ -43,7 +44,7 @@ def check_winner():
 
     # 勝者の描画
     if winner == 'o' or winner == 'x':
-        winner_text_img = font.render(winner +' Win!', True, BLACK, GREEN)
+        winner_text_img = font.render(winner + ' Win!', True, BLACK, GREEN)
         screen.blit(winner_text_img, (200, 150))
         reset_text_img = font.render('click to reset', True, BLACK, GREEN)
         screen.blit(reset_text_img, (100, 300))
@@ -55,7 +56,7 @@ def check_winner():
 screen_width = 600
 screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("ox ゲーム")
+pygame.display.set_caption("OX ゲーム")
 
 # 他の設定
 BLACK = (0, 0, 0)
@@ -75,26 +76,99 @@ board = [
 
 number = 1
 
+# ミニマックス法でAIの手を計算
+def minimax(board, depth, is_maximizing):
+    if check_winner():
+        if is_maximizing:
+            return -1
+        else:
+            return 1
+    if depth == 0:
+        return 0
+
+    if is_maximizing:
+        max_eval = -math.inf
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] == 0:
+                    board[row][col] = -1
+                    eval = minimax(board, depth - 1, False)
+                    board[row][col] = 0
+                    max_eval = max(max_eval, eval)
+        return max_eval
+    else:
+        min_eval = math.inf
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] == 0:
+                    board[row][col] = 1
+                    eval = minimax(board, depth - 1, True)
+                    board[row][col] = 0
+                    min_eval = min(min_eval, eval)
+        return min_eval
+
+# AIの手を選択
+def ai_move():
+    best_eval = -math.inf
+    best_move = None
+    if board[1][1] == 0:
+        board[1][1] = -1
+    else:
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] == 0:
+                    board[row][col] = -1
+                    eval = minimax(board, 3, False)
+                    board[row][col] = 0
+                    if eval > best_eval:
+                        best_eval = eval
+                        best_move = (row, col)
+    if best_move:
+        board[best_move[0]][best_move[1]] = -1
+
+
 # メインループ#####################################################
 run = True
+player_turn = True  # プレイヤーのターンかどうかを管理
+
 while run:
 
     # 背景の塗りつぶし
     screen.fill(WHITE)
     
     # グリッド線の描画
-    drow_grid()
+    draw_grid()
 
-    # マウスの一の取得
+    # マウスの位置を取得
     mx, my = pygame.mouse.get_pos()
     x = mx // 200
     y = my // 200
 
     # ボードの描画
-    drow_board()
+    draw_board()
 
     # 勝者の確認
     game_over = check_winner()
+
+    # プレイヤーのターンで、かつゲームが終了していない場合にのみプレイヤーの手を選択
+    if player_turn and not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    run = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if board[y][x] == 0:
+                    board[y][x] = number
+                    player_turn = False  # プレイヤーの手を選択したらAIのターンへ
+                    number *= -1
+
+    # AIの手を選択
+    if not player_turn and not game_over:
+        ai_move()
+        number *= -1
+        player_turn = True  # AIの手を選択したらプレイヤーのターンへ
 
     # イベントの取得
     for event in pygame.event.get():
@@ -104,16 +178,14 @@ while run:
             if event.key == pygame.K_ESCAPE:
                 run = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if board[y][x] == 0 and game_over == False:
-                board[y][x] = number
-                number *= -1
             if game_over:
                 board = [
                     [0, 0, 0],
                     [0, 0, 0],
                     [0, 0, 0]]
                 number = 1
-    
+                player_turn = True
+
     # 更新
     pygame.display.update()
 
