@@ -21,6 +21,14 @@ def draw_board():
                 pygame.draw.line(screen, BLUE, (col_index * 200 + 20, row_index * 200 + 20), (col_index * 200 + 180, row_index * 200 + 180), 5)
                 pygame.draw.line(screen, BLUE, (col_index * 200 + 180, row_index * 200 + 20), (col_index * 200 + 20, row_index * 200 + 180), 5)
 
+# ボードの中身が0か確認
+def all_elements_nonzero():
+    for row in board:
+        for element in row:
+            if element == 0:
+                return False
+    return True
+
 # 勝利の確認
 def check_winner():
     winner = None
@@ -46,6 +54,13 @@ def check_winner():
     if winner == 'o' or winner == 'x':
         winner_text_img = font.render(winner + ' Win!', True, BLACK, GREEN)
         screen.blit(winner_text_img, (200, 150))
+        reset_text_img = font.render('click to reset', True, BLACK, GREEN)
+        screen.blit(reset_text_img, (100, 300))
+        game_over = True
+    
+    elif all_elements_nonzero():
+        draw_text_img = font.render('It is a draw.', True, BLACK, GREEN)
+        screen.blit(draw_text_img,(110,150))
         reset_text_img = font.render('click to reset', True, BLACK, GREEN)
         screen.blit(reset_text_img, (100, 300))
         game_over = True
@@ -126,6 +141,9 @@ def ai_move():
     if best_move:
         board[best_move[0]][best_move[1]] = -1
 
+    # AIの手を選択した後に遅延を追加
+    pygame.time.delay(500)  # 500ミリ秒（0.5秒）の遅延
+
 
 # メインループ#####################################################
 run = True
@@ -150,35 +168,29 @@ while run:
     # 勝者の確認
     game_over = check_winner()
 
-    # プレイヤーのターンで、かつゲームが終了していない場合にのみプレイヤーの手を選択
-    if player_turn and not game_over:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    run = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if board[y][x] == 0:
-                    board[y][x] = number
-                    player_turn = False  # プレイヤーの手を選択したらAIのターンへ
-                    number *= -1
-
-    # AIの手を選択
-    if not player_turn and not game_over:
-        ai_move()
-        number *= -1
-        player_turn = True  # AIの手を選択したらプレイヤーのターンへ
-
-    # イベントの取得
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 run = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if game_over:
+        # プレイヤーのターンで、かつゲームが終了していない場合にのみプレイヤーの手を選択
+        if player_turn and not game_over:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if board[y][x] == 0:
+                    board[y][x] = number
+                    player_turn = False  # プレイヤーの手を選択したらAIのターンへ
+                    number *= -1
+
+        # AIの手を選択
+        elif not player_turn and not game_over:
+            ai_move()
+            number *= -1
+            player_turn = True  # AIの手を選択したらプレイヤーのターンへ
+
+        # ゲームが終了したら
+        elif game_over:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 board = [
                     [0, 0, 0],
                     [0, 0, 0],
