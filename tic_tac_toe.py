@@ -92,12 +92,13 @@ board = [
 number = 1
 
 # ミニマックス法でAIの手を計算
-def minimax(board, depth, is_maximizing):
+def minimax(depth, is_maximizing):
     if check_winner():
         if is_maximizing:
             return -1
         else:
             return 1
+        
     if depth == 0:
         return 0
 
@@ -107,7 +108,7 @@ def minimax(board, depth, is_maximizing):
             for col in range(3):
                 if board[row][col] == 0:
                     board[row][col] = -1
-                    eval = minimax(board, depth - 1, False)
+                    eval = minimax(depth - 1, False)
                     board[row][col] = 0
                     max_eval = max(max_eval, eval)
         return max_eval
@@ -117,7 +118,7 @@ def minimax(board, depth, is_maximizing):
             for col in range(3):
                 if board[row][col] == 0:
                     board[row][col] = 1
-                    eval = minimax(board, depth - 1, True)
+                    eval = minimax(depth - 1, True)
                     board[row][col] = 0
                     min_eval = min(min_eval, eval)
         return min_eval
@@ -133,7 +134,7 @@ def ai_move():
             for col in range(3):
                 if board[row][col] == 0:
                     board[row][col] = -1
-                    eval = minimax(board, 3, False)
+                    eval = minimax(3, False)
                     board[row][col] = 0
                     if eval > best_eval:
                         best_eval = eval
