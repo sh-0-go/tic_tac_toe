@@ -90,6 +90,7 @@ board = [
     [0, 0, 0]]
 
 number = 1
+turn_count = 1
 
 # ミニマックス法でAIの手を計算
 def minimax(depth, is_maximizing):
@@ -129,12 +130,23 @@ def ai_move():
     best_move = None
     if board[1][1] == 0:
         board[1][1] = -1
+    elif board[1][2] == 1 and board[2][0] == 1 and board[2][2] == 0 and turn_count == 4:
+        board[2][2] = -1
+    elif board[2][1] == 1 and board[0][0] == 1 and board[2][0] == 0 and turn_count == 4:
+        board[2][0] = -1
+    elif board[2][1] == 1 and board[0][2] == 1 and board[2][2] == 0 and turn_count == 4:
+        board[2][2] = -1
+    elif board[0][2] == 1 and board[2][0] == 1 and board[1][2] == 0 and turn_count == 4:
+        board[1][2] = -1
+    elif board[1][1] == 1 and board[2][2] == 1 and board[0][2] == 0 and turn_count == 4:
+        board[0][2] = -1
     else:
         for row in range(3):
             for col in range(3):
+                print(pygame.time.get_ticks())
                 if board[row][col] == 0:
                     board[row][col] = -1
-                    eval = minimax(3, False)
+                    eval = minimax(1, False)
                     board[row][col] = 0
                     if eval > best_eval:
                         best_eval = eval
@@ -144,7 +156,6 @@ def ai_move():
 
     # AIの手を選択した後に遅延を追加
     pygame.time.delay(500)  # 500ミリ秒（0.5秒）の遅延
-
 
 # メインループ#####################################################
 run = True
@@ -180,14 +191,16 @@ while run:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if board[y][x] == 0:
                     board[y][x] = number
+                    turn_count += 1
                     player_turn = False  # プレイヤーの手を選択したらAIのターンへ
                     number *= -1
 
         # AIの手を選択
         elif not player_turn and not game_over:
             ai_move()
-            number *= -1
+            turn_count +=1
             player_turn = True  # AIの手を選択したらプレイヤーのターンへ
+            number *= -1
 
         # ゲームが終了したら
         elif game_over:
@@ -196,8 +209,10 @@ while run:
                     [0, 0, 0],
                     [0, 0, 0],
                     [0, 0, 0]]
-                number = 1
+                turn_count = 1
                 player_turn = True
+                number = 1
+
 
     # 更新
     pygame.display.update()
